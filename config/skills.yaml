@@ -1,0 +1,67 @@
+# ============================================================
+# Включение / выключение скиллов.
+# Скилл, помеченный enabled: false, не будет показан LLM.
+# ============================================================
+
+skills:
+  # --- info ---
+  get_time:        { enabled: true }
+  get_date:        { enabled: true }
+  get_weather:     { enabled: true,  city_default: "Бишкек" }
+
+  # --- apps ---
+  open_app:        { enabled: true }
+  close_app:       { enabled: true }
+  switch_app:      { enabled: true }
+
+  # --- browser ---
+  web_search:      { enabled: true,  engine: google }
+  open_url:        { enabled: true }
+  youtube_search:  { enabled: true }
+  wiki_search:     { enabled: true }
+
+  # --- system ---
+  set_volume:      { enabled: true }
+  set_brightness:  { enabled: true }
+  lock_screen:     { enabled: true,  requires_confirmation: true }
+  sleep_mac:       { enabled: false, requires_confirmation: true }
+  take_screenshot: { enabled: true }
+
+  # --- music ---
+  play_music:      { enabled: true,  default_app: spotify }
+  pause_music:     { enabled: true }
+  next_track:      { enabled: true }
+  prev_track:      { enabled: true }
+  current_song:    { enabled: true }
+
+  # --- messages ---
+  send_telegram:   { enabled: false, requires_confirmation: true }
+  send_imessage:   { enabled: false, requires_confirmation: true }
+  read_unread_mail:{ enabled: false }
+
+  # --- calendar ---
+  get_today_events:    { enabled: true }
+  get_tomorrow_events: { enabled: true }
+  create_event:        { enabled: false, requires_confirmation: true }
+
+  # --- notes / clipboard ---
+  create_note:         { enabled: true }
+  copy_to_clipboard:   { enabled: true }
+  read_clipboard:      { enabled: true }
+
+  # --- files ---
+  open_path:           { enabled: true }
+  spotlight_search:    { enabled: true }
+
+  # --- vision (анализ экрана через multimodal LLM) ---
+  # provider: openai | openrouter | nvidia (авто = первый, у которого есть ключ в .env)
+  # model: любая vision-модель провайдера (gpt-4o-mini, llama-3.2-90b-vision и т.д.)
+  # api_key_env: имя env-переменной с ключом
+  analyze_screen:
+    enabled: true
+    provider: aihubmix         # openai | aihubmix | openrouter | nvidia
+    model: gpt-5.5-free        # vision-модель провайдера
+    # api_key_env: AIHUBMIX_API_KEY  (берётся из preset для provider)
+    # base_url: https://aihubmix.com/v1  (берётся из preset)
+    max_tokens: 600
+    capture: full              # full | window | selection

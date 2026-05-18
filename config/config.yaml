@@ -1,0 +1,135 @@
+# ============================================================
+# Jarvis — основной конфиг.
+# Все параметры можно менять без перезапуска кодовой базы.
+# Секреты — в .env, не здесь.
+# ============================================================
+
+# Язык по умолчанию: ru | en
+language: ru
+
+# Имя ассистента (как обращаться) — используется в системном промпте.
+assistant_name: Джарвис
+
+# --- Wake word ---
+# Если enabled=true, ассистент слушает фоном и ждёт слово "Джарвис".
+# Если enabled=false, используется push-to-talk (зажми пробел).
+wake_word:
+  enabled: true
+  engine: openwakeword              # open-source, бесплатный, без регистрации
+  keyword: hey_jarvis               # имя pretrained модели openwakeword
+  threshold: 0.40
+  min_consecutive_frames: 1
+  pre_roll_ms: 600                  # сохранять последние N мс аудио ДО триггера
+  debug_scores: true                # печатать score'ы (выключи когда настроишь)
+  silence_threshold: 0.005          # RMS порог для определения тишины
+  silence_duration: 1.2             # сколько подряд секунд тишины = конец фразы
+  initial_grace: 4.0                # сколько ждать пока юзер начнёт говорить после wake
+  max_command_duration: 12.0        # потолок длины команды (сек)
+  cooldown_after_trigger: 0.3       # дроп ~хвоста слова "Джарвис"
+
+# --- Push-to-talk (используется если wake_word.enabled=false) ---
+push_to_talk:
+  enabled: true
+  hotkey: space                     # клавиша которую держать чтобы говорить
+
+# --- Speech-to-Text (Whisper) ---
+stt:
+  engine: whisper
+  model: medium                     # tiny | base | small | medium | large-v3
+  device: auto                      # auto | cpu | mps | cuda
+  compute_type: int8                # int8 | float16 | float32
+  language: ru                      # ru | en | auto
+  initial_prompt: ""                # пусто = словарь по умолчанию (см. assistant.py)
+  beam_size: 5                      # 1=greedy (быстро) | 5=точно (медленнее)
+
+# --- Text-to-Speech ---
+tts:
+  engine: say                       # say | f5tts | elevenlabs
+  # say     — мгновенный, надёжный, голос Yuri (macOS native). Рекомендуется.
+  # f5tts   — клонирование голоса Джарвиса. Медленно (~15-25 сек) и капризно с tech-словами.
+  # elevenlabs — премиум, нужен ELEVENLABS_API_KEY.
+  say:
+    voice: Yuri                     # `say -v ?` — список голосов macOS
+    rate: 200
+  elevenlabs:
+    voice_id: nPczCjzI2devNBz1zQrb  # Brian (мужской, классика для Джарвиса)
+    model: eleven_multilingual_v2
+    stability: 0.5
+    similarity_boost: 0.75
+    cache_enabled: true
+  # F5-TTS_RUSSIAN — open-source русскоязычный voice cloning от Misha24-10.
+  # Полностью бесплатно, локально (~1.3 GB чекпоинт скачается при первом запуске).
+  f5tts:
+    ref_file: assets/sounds/voices/jarvis-clean/actor_master.wav
+    ref_text: ""                    # пусто = читаем из <ref_file>.txt
+    checkpoint: v2                  # v1 | v2 (рек.) | v4_winter | accent_tune
+    device: auto                    # auto = MPS на Apple Silicon (3-5x быстрее) | cpu | mps
+    cache_enabled: true
+    nfe_step: 16                    # шаги диффузии (16-64). 16=быстро, 32=баланс, 64=качество
+    cfg_strength: 2.0               # 1.5-3.0. выше = ближе к референсу
+    sway_sampling_coef: -1.0        # -1 = новый sampler (лучше)
+    speed: 1.0
+    seed: -1                        # -1 = случайный (живее), фикс. число = детерминированно
+    use_ruaccent: true              # авто-расстановка ударений через RUAccent
+
+# --- LLM brain ---
+# Доступны 3 движка (все OpenAI-совместимые, поддерживают tool calling):
+#   aihubmix — gpt-5.5-free (бесплатный, рек.). Ключ: AIHUBMIX_API_KEY
+#   mistral  — mistral-small-latest (быстрый, free tier). Ключ: MISTRAL_API_KEY
+#   gemini   — gemini-2.5-flash. Ключ: GOOGLE_API_KEY
+brain:
+  engine: aihubmix
+  aihubmix:
+    model: gpt-5.5-free
+    max_tokens: 1024
+    temperature: 0.7
+    base_url: https://aihubmix.com/v1
+  mistral:
+    model: mistral-small-latest
+    max_tokens: 1024
+    temperature: 0.7
+    base_url: https://api.mistral.ai/v1
+  gemini:
+    model: gemini-2.5-flash
+    max_tokens: 1024
+    temperature: 0.7
+  max_history: 20
+  system_prompt_path: config/system_prompt.txt
+
+# --- Аудио параметры ---
+audio:
+  sample_rate: 16000
+  channels: 1
+  input_device: null                # null = дефолтный микрофон
+  output_device: null
+  vad:
+    enabled: true
+    threshold: 0.5
+    silence_duration: 1.5
+    min_speech_duration: 0.3
+
+# --- Логирование ---
+logging:
+  level: INFO                       # DEBUG | INFO | WARNING | ERROR
+  file: logs/jarvis.log
+  rotation: "10 MB"
+  retention: "7 days"
+
+# --- Звуки уведомлений ---
+sounds:
+  enabled: true
+  on_wake: assets/sounds/wake.wav
+  on_done: assets/sounds/done.wav
+  on_error: assets/sounds/error.wav
+
+# --- Voice Reactions ---
+# Готовые клипы из Priler/jarvis (русский актёр, имитирующий голос Paul Bettany).
+# Воспроизводятся на ключевые события вместо TTS — звучит аутентичнее.
+reactions:
+  enabled: true
+  pack_dir: assets/sounds/voices/jarvis-remaster
+  fallback_dir: assets/sounds/voices/jarvis-og
+  play_on_wake: true                # "Слушаю, сэр" на срабатывание wake word
+  play_on_ok: true                  # "Готово" после успешной команды (зарезервировано)
+  play_on_greet: true               # приветствие при старте (по времени суток)
+  play_on_goodbye: true             # "До свидания" при выходе
