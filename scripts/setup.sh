@@ -46,7 +46,7 @@ chmod 600 .env
 echo "🔒 Права на .env установлены: 600"
 
 # --- 5. Папки для логов и моделей ---
-mkdir -p logs assets/wake_words assets/sounds assets/recordings
+mkdir -p logs assets/sounds assets/recordings
 
 echo ""
 echo "✨ Готово!"

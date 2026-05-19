@@ -20,7 +20,9 @@ ENV_PATH = PROJECT_ROOT / ".env"
 class WakeWordConfig(BaseModel):
     enabled: bool = False
     engine: str = "openwakeword"  # openwakeword (только)
-    keyword: str = "hey_jarvis"  # имя openwakeword модели
+    # str — одна модель (старый формат), list[str] — несколько моделей,
+    # любая срабатывание засчитывается.
+    keyword: str | list[str] = "hey_jarvis"
     threshold: float = 0.5  # порог срабатывания (0..1)
     silence_threshold: float = 0.005  # RMS-уровень = тишина
     silence_duration: float = 1.2  # сколько тишины подряд = конец фразы
@@ -30,11 +32,19 @@ class WakeWordConfig(BaseModel):
     debug_scores: bool = False  # печатать каждый score >= 0.1 для калибровки
     min_consecutive_frames: int = 2  # сколько кадров подряд должно быть выше порога
     pre_roll_ms: int = 600  # сохранить ~N мс аудио ДО wake (защита от срезанного начала)
+    # max-of-N окно: триггер если max за последние N фреймов >= threshold.
+    # 6 фреймов ≈ 480 мс, что покрывает длительность одного «джарвис».
+    window_frames: int = 6
 
 
 class PushToTalkConfig(BaseModel):
     enabled: bool = True
     hotkey: str = "space"
+    # Глобальная hotkey-комбинация (формат pynput.GlobalHotKeys), например
+    # "<cmd>+<shift>+j". В отличие от `hotkey` (push-and-hold), это тап:
+    # нажал — Джарвис активируется и пишет команду до тишины.
+    # Работает параллельно с wake-word.
+    hotkey_combo: str = "<cmd>+<shift>+j"
 
 
 class STTConfig(BaseModel):
@@ -50,10 +60,9 @@ class STTConfig(BaseModel):
 
 
 class TTSConfig(BaseModel):
-    engine: str = "f5tts"  # say | f5tts | elevenlabs
+    engine: str = "say"  # say (macOS native) | xtts (voice cloning)
     say: dict[str, Any] = Field(default_factory=dict)
-    elevenlabs: dict[str, Any] = Field(default_factory=dict)
-    f5tts: dict[str, Any] = Field(default_factory=dict)  # F5-TTS_RUSSIAN voice cloning
+    xtts: dict[str, Any] = Field(default_factory=dict)  # XTTS-v2 voice cloning
 
 
 class BrainConfig(BaseModel):
@@ -87,13 +96,6 @@ class LoggingConfig(BaseModel):
     retention: str = "7 days"
 
 
-class SoundsConfig(BaseModel):
-    enabled: bool = True
-    on_wake: str = "assets/sounds/wake.wav"
-    on_done: str = "assets/sounds/done.wav"
-    on_error: str = "assets/sounds/error.wav"
-
-
 class ReactionsConfig(BaseModel):
     """Готовые клипы голоса Джарвиса для частых событий (Priler/jarvis remaster).
 
@@ -120,7 +122,6 @@ class Config(BaseModel):
     brain: BrainConfig = Field(default_factory=BrainConfig)
     audio: AudioConfig = Field(default_factory=AudioConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
-    sounds: SoundsConfig = Field(default_factory=SoundsConfig)
     reactions: ReactionsConfig = Field(default_factory=ReactionsConfig)
 
     project_root: Path = PROJECT_ROOT

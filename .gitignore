@@ -55,6 +55,4 @@ Thumbs.db
 ehthumbs.db
 
 # --- User assets ---
-assets/wake_words/*.ppn
-!assets/wake_words/.gitkeep
 assets/recordings/

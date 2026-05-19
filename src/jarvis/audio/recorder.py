@@ -27,8 +27,8 @@ _KEY_MAP: dict[str, Any] = {
 class Recorder:
     """Запись аудио с микрофона.
 
-    Phase 1: push-to-talk через `sounddevice` + `pynput`.
-    Phase 2: непрерывный кольцевой буфер для wake word + VAD.
+    Push-to-talk через `sounddevice` + `pynput`: глобальный hotkey, юзер
+    удерживает клавишу, пока говорит.
     """
 
     def __init__(
@@ -110,7 +110,3 @@ class Recorder:
         audio = np.concatenate(frames, axis=0).flatten().astype(np.float32)
         logger.info("✅ Записано {:.1f}s аудио", len(audio) / self.sample_rate)
         return audio
-
-    async def record_until_silence(self, max_duration: float = 30.0) -> np.ndarray:
-        """Пишет до VAD-тишины или max_duration. Phase 2."""
-        raise NotImplementedError("Phase 2")
